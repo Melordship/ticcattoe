@@ -102,12 +102,16 @@ const onClick = (selected) => {
     }
     const playerOneWin = checkPlayer(selectedColsByPlayer.playerOne?.map(c =>  c.col) || []);
     if (playerOneWin) {
-        alert('player one win');
+          setTimeout(() => {
+            alert('Player one wins');
+        }, 500)
         playerOneScore.value++;
     }
     const playerTwoWin = checkPlayer(selectedColsByPlayer.playerTwo?.map(c =>  c.col) || []);
     if (playerTwoWin) {
-        alert('player two win');
+           setTimeout(() => {
+            alert('Player two wins');
+        }, 500)
         playerTwoScore.value++;
     }
 }
@@ -119,7 +123,9 @@ const playerTwoScore = ref(0);
 
 <style>
 .gameBoard {
-    width: 500px;
+    width: 100%;
+    margin-left: 20px;
+    margin-right: 20px;
     border-radius: 5%;
     border: 2px solid pink;
     height: 300px;
