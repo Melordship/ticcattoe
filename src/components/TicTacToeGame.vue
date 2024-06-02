@@ -112,8 +112,14 @@ const currentPlayer = ref("playerOne");
 
 const reset = () => {
     columnsSelected.value = [];
-    currentPlayer.value = 'playerTwo';
+    changeCurrentPlayer();
     game.value = {};
+}
+
+const changeCurrentPlayer = () => {
+    const curPlayer = currentPlayer.value;
+    if (curPlayer = 'playerOne') currentPlayer.value = "playerTwo";
+    else currentPlayer.value = "playerOne";
 }
 
 const gameReset = () => {
