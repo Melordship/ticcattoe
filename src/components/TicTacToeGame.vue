@@ -118,7 +118,7 @@ const reset = () => {
 
 const changeCurrentPlayer = () => {
     const curPlayer = currentPlayer.value;
-    if (curPlayer = 'playerOne') currentPlayer.value = "playerTwo";
+    if (curPlayer === 'playerOne') currentPlayer.value = "playerTwo";
     else currentPlayer.value = "playerOne";
 }
 
