@@ -1,293 +1,368 @@
 <template>
-    <div style="width: 100%; height: 100vh; align-items: center; justify-content: center; display: flex; flex-direction: column;">
-        <h1>Tic Cat Toe</h1>
-        <div class="gameBoard">
-            <div class="row row-1">
-                <div class="col col-1 br bb" @click="onClick('col1')">
-                    <img v-if="Object.keys(game).includes('col1')" width="100%" height="100%" :src="images[game['col1']]"/>
-                </div>
-                <div class="col col-2 br bb" @click="onClick('col2')">
-                    <img v-if="Object.keys(game).includes('col2')" width="100%" height="100%" :src="images[game['col2']]"/>
-                </div>
-                <div class="col col-3 bb"  @click="onClick('col3')">
-                    <img v-if="Object.keys(game).includes('col3')" width="100%" height="100%" :src="images[game['col3']]"/>
-                </div>
-            </div>
-            <div class="row row-2">
-                <div class="col col-1 br bb"  @click="onClick('col4')">
-                    <img v-if="Object.keys(game).includes('col4')" width="100%" height="100%" :src="images[game['col4']]"/>
-                </div>
-                <div class="col col-2 br bb"  @click="onClick('col5')">
-                    <img v-if="Object.keys(game).includes('col5')" width="100%" height="100%" :src="images[game['col5']]"/>
-                </div>
-                <div class="col col-3 bb"  @click="onClick('col6')">
-                    <img v-if="Object.keys(game).includes('col6')" width="100%" height="100%" :src="images[game['col6']]"/></div>
-            </div>
-            
-            <div class="row row-3">
-                <div class="col col-1 br"  @click="onClick('col7')">
-                    <img v-if="Object.keys(game).includes('col7')" width="100%" height="100%" :src="images[game['col7']]"/>
-                </div>
-                <div class="col col-2 br"  @click="onClick('col8')">
-                    <img v-if="Object.keys(game).includes('col8')" width="100%" height="100%" :src="images[game['col8']]"/>
-                </div>
-                <div class="col col-3"  @click="onClick('col9')">
-                    <img v-if="Object.keys(game).includes('col9')" width="100%" height="100%" :src="images[game['col9']]"/>
-                </div>
-            </div>
+  <main class="game-shell">
+    <section class="game-panel" aria-label="Tic Cat Toe game">
+      <header class="game-header">
+        <div>
+          <p class="eyebrow">LOCAL MATCH</p>
+          <h1>Tic Cat Toe</h1>
         </div>
+        <button class="icon-button" type="button" aria-label="Open settings" title="Settings" @click="settingsOpen = true">
+          <Settings :size="20" />
+        </button>
+      </header>
 
-        <h2 class="scoreText" style="margin-top: 20px">Current Turn: {{ currentPlayer === 'playerOne' ? playerOneName : playerTwoName}}</h2>
-        <div class="scoreText" style="">{{playerOneName}}: {{ playerOneScore }}</div>
-        <div class="scoreText">{{playerTwoName}}: {{ playerTwoScore }}</div>
-        <div style="margin-top: 30px">
-            <btn class="btn" @click="gameReset">Reset</btn>
-            <btn class="btn" @click="settingsOpen = true" style="margin-left: 10px">Settings</btn>
+      <div class="scoreboard">
+        <div class="player-card" :class="{ active: !result && currentPlayer === 'playerOne' }">
+          <span class="player-mark cat-mark">C</span>
+          <div><span class="player-label">CAT</span><strong>{{ playerOneName }}</strong></div>
+          <b>{{ playerOneScore }}</b>
         </div>
-        
+        <div class="versus">VS</div>
+        <div class="player-card player-two" :class="{ active: !result && currentPlayer === 'playerTwo' }">
+          <span class="player-mark fish-mark">F</span>
+          <div><span class="player-label">FISH</span><strong>{{ playerTwoName }}</strong></div>
+          <b>{{ playerTwoScore }}</b>
+        </div>
+      </div>
+
+      <div class="turn-status">
+        <span class="status-dot"></span>
+        {{ result ? result : `${currentPlayerName}'s turn` }}
+      </div>
+
+      <div class="board" role="grid" aria-label="Game board">
+        <button
+          v-for="(cell, index) in board"
+          :key="index"
+          class="cell"
+          :class="{ occupied: cell, winning: winningCells.includes(index) }"
+          type="button"
+          role="gridcell"
+          :aria-label="cell ? `${cellName(index)}: ${cell === 'playerOne' ? playerOneName : playerTwoName}` : `Place in square ${index + 1}`"
+          :disabled="Boolean(cell) || Boolean(result)"
+          @click="makeMove(index)"
+        >
+          <span v-if="cell === 'playerOne'" class="board-mark cat-mark">C</span>
+          <span v-if="cell === 'playerTwo'" class="board-mark fish-mark">F</span>
+        </button>
+      </div>
+
+      <div class="game-actions">
+        <button class="secondary-button" type="button" @click="gameReset">
+          <RotateCcw :size="17" /> Reset match
+        </button>
+        <button class="primary-button" type="button" :disabled="!result" @click="playAgain">
+          Next round <ArrowRight :size="17" />
+        </button>
+      </div>
+    </section>
+
+    <div v-if="settingsOpen" class="overlay" role="presentation" @click.self="closeSettings">
+      <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <button class="icon-button dialog-close" type="button" aria-label="Close settings" @click="closeSettings">
+          <X :size="20" />
+        </button>
+        <p class="eyebrow">MATCH SETUP</p>
+        <h2 id="settings-title">Choose your names</h2>
+        <label>
+          <span>Cat player</span>
+          <input v-model="playerOneNameInput" maxlength="18" />
+        </label>
+        <label>
+          <span>Fish player</span>
+          <input v-model="playerTwoNameInput" maxlength="18" />
+        </label>
+        <button class="primary-button full-button" type="button" @click="saveSettings">Save & play</button>
+      </section>
     </div>
-
-    <!-- <transition> -->
-        <div v-if="settingsOpen" id="settings-modal">
-            <h1 style="color: pink">Tic Cat Toe Settings</h1>
-            <div>
-                <label for="playerOneName" style="margin-right: 10px;">Player One Name</label>
-                <input name="playerOneName" class="nameInput" v-model="playerOneNameInput"/>
-            </div>
-            <div style="margin-top: 10px">
-                <label for="playerTwoName" style="margin-right: 10px;">Player One Name</label>
-                <input name="playerTwoName" class="nameInput" v-model="playerTwoNameInput">
-            </div>
-
-            <div style="margin-top: 30px">
-                <button class="btn" @click="onSettingsSave">Play</button>
-            </div>
-        </div>
-    <!-- </transition> -->
-
-    <div class="modal" v-if="modal">
-        <div style="margin-top: 50px">{{ modalMsg }}</div>
-
-        <div style="margin-top: 50px">
-            <button class="btn" style="background: palevioletred" @click="playAgain">Play Again?</button>
-        </div>
-    </div>
+  </main>
 </template>
 <script setup>
-import {ref} from "vue";
-import _ from "lodash-core";
+import { computed, ref } from 'vue'
+import { ArrowRight, RotateCcw, Settings, X } from '@lucide/vue'
 
-const images = {
-    playerOne: "https://t3.ftcdn.net/jpg/05/78/01/02/360_F_578010240_tGolzJLeqVstZhCkteEyuHch5Oj6Fyyh.jpg",
-    playerTwo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkg7Rbxs_4PaXnjym3u0B1d86DfZvJXKUBXg&s"
-};
+const playerOneName = ref('Mochi')
+const playerTwoName = ref('Toast')
+const playerOneNameInput = ref(playerOneName.value)
+const playerTwoNameInput = ref(playerTwoName.value)
+const playerOneScore = ref(0)
+const playerTwoScore = ref(0)
+const settingsOpen = ref(true)
+const currentPlayer = ref('playerOne')
+const board = ref(Array(9).fill(null))
+const result = ref('')
+const winningCells = ref([])
 
-const playerOneName = ref("Player One");
-const playerTwoName = ref("Player Two");
+const winningPatterns = [
+  [0, 1, 2], [3, 4, 5], [6, 7, 8],
+  [0, 3, 6], [1, 4, 7], [2, 5, 8],
+  [0, 4, 8], [2, 4, 6]
+]
 
-const playerOneNameInput = ref(playerOneName.value);
-const playerTwoNameInput = ref(playerTwoName.value);
-const onSettingsSave = () => {
-    playerOneName.value = playerOneNameInput.value;
-    playerTwoName.value = playerTwoNameInput.value;
-    settingsOpen.value = false;
+const currentPlayerName = computed(() =>
+  currentPlayer.value === 'playerOne' ? playerOneName.value : playerTwoName.value
+)
+
+const cellName = (index) => `${Math.floor(index / 3) + 1}, ${index % 3 + 1}`
+
+const saveSettings = () => {
+  playerOneName.value = playerOneNameInput.value.trim() || 'Mochi'
+  playerTwoName.value = playerTwoNameInput.value.trim() || 'Toast'
+  settingsOpen.value = false
 }
 
-const settingsOpen = ref(true);
-const game = ref({});
+const closeSettings = () => {
+  playerOneNameInput.value = playerOneName.value
+  playerTwoNameInput.value = playerTwoName.value
+  settingsOpen.value = false
+}
 
-const modal = ref(false);
-const modalMsg = ref("");
+const resetBoard = () => {
+  board.value = Array(9).fill(null)
+  result.value = ''
+  winningCells.value = []
+}
 
 const playAgain = () => {
-    reset();
-    modal.value = false;
-}
-
-// const playerOne = "playerOne";
-// const playerTwo= "playerTwo";
-const columnsSelected = ref([]);
-
-const currentPlayer = ref("playerOne");
-
-const reset = () => {
-    columnsSelected.value = [];
-    changeCurrentPlayer();
-    game.value = {};
-}
-
-const changeCurrentPlayer = () => {
-    const curPlayer = currentPlayer.value;
-    if (curPlayer === 'playerOne') currentPlayer.value = "playerTwo";
-    else currentPlayer.value = "playerOne";
+  if (!result.value) return
+  resetBoard()
 }
 
 const gameReset = () => {
-    reset();
-    playerOneScore.value = 0;
-    playerTwoScore.value = 0;
+  resetBoard()
+  playerOneScore.value = 0
+  playerTwoScore.value = 0
+  currentPlayer.value = 'playerOne'
 }
 
+const makeMove = (index) => {
+  if (settingsOpen.value || board.value[index] || result.value) return
 
-const onClick = (selected) => {
-    
-    if (settingsOpen.value || modal.value) return;
+  const player = currentPlayer.value
+  board.value[index] = player
 
-    if (currentPlayer.value === "playerOne") {
-        if (game.value[selected] === 'playerTwo') return;
-        game.value[selected] = 'playerOne';
-        currentPlayer.value = 'playerTwo';
-    } else {
-        if (game.value[selected] === 'playerOne') return;
-        game.value[selected] = 'playerTwo';
-        currentPlayer.value = 'playerOne';
-    }
-   
+  const winningPattern = winningPatterns.find(pattern =>
+    pattern.every(cell => board.value[cell] === player)
+  )
 
-    columnsSelected.value = [...columnsSelected.value, selected];
+  if (winningPattern) {
+    winningCells.value = winningPattern
+    result.value = `${currentPlayerName.value} wins!`
+    if (player === 'playerOne') playerOneScore.value++
+    else playerTwoScore.value++
+    return
+  }
 
-    const val = game.value;
+  if (board.value.every(Boolean)) {
+    result.value = 'Round draw'
+    return
+  }
 
-    console.log(Object.entries(val));
-    const selectedColsByPlayer = _.groupBy(Object.entries(val).map(([col, player]) => ({col , player})), "player");
-
-    const checkPlayer = (columns) => {
-        console.log("columns", columns);
-        const matchingPatterns = [
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, 8, 9],
-            [1, 5, 9],
-            [7, 5, 3],
-            [1, 4, 7],
-            [2, 5, 8],
-            [3, 6, 9]
-        ];
-
-        return matchingPatterns.some(pat => {
-            return pat.filter(p =>{
-                return columns.includes(`col${p}`)
-            })?.length === 3;
-        })
-    }
-    const playerOneWin = checkPlayer(selectedColsByPlayer.playerOne?.map(c =>  c.col) || []);
-    if (playerOneWin) {
-        modalMsg.value = `${playerOneName.value} wins`
-        modal.value = true;
-        
-        playerOneScore.value++;
-    }
-    const playerTwoWin = checkPlayer(selectedColsByPlayer.playerTwo?.map(c =>  c.col) || []);
-    if (playerTwoWin) {
-        modalMsg.value = `${playerTwoName.value} wins`
-        modal.value = true;
-
-        playerTwoScore.value++;
-    }
-
-    if (!playerOneWin && !playerTwoWin && Object.values(val).length === 9)
-    {
-        modalMsg.value = `It's a draw!`
-        modal.value = true;
-
-        playerOneScore.value++;
-        playerTwoScore.value++;
-    }
-
+  currentPlayer.value = player === 'playerOne' ? 'playerTwo' : 'playerOne'
 }
-
-const playerOneScore = ref(0);
-const playerTwoScore = ref(0);
-
 </script>
 
-<style>
-.gameBoard {
-    width: 100%;
-    margin-left: 20px;
-    margin-right: 20px;
-    border-radius: 5%;
-    border: 2px solid pink;
-    height: 300px;
+<style scoped>
+.game-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
-.row {
-    display: flex;
-    justify-content: space-between;
-    gap: 1px;
-    height: 33%;
+.game-shell::before {
+  content: '';
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  left: -140px;
+  top: -170px;
+  border: 1px solid rgba(35, 70, 67, 0.12);
+  border-radius: 50%;
+  box-shadow: 0 0 0 70px rgba(35, 70, 67, 0.025), 0 0 0 140px rgba(35, 70, 67, 0.018);
 }
 
-.col{
-    /* border: 2px solid pink; */
-    width: 100%;
+.game-panel {
+  width: min(520px, 100%);
+  position: relative;
+  z-index: 1;
 }
 
-.btn {
-    background: pink;
-    border-radius: 5px;
-    padding: 10px;
-    width: 300px;
-    cursor: pointer;
+.game-header, .scoreboard, .game-actions {
+  display: flex;
+  align-items: center;
 }
 
-.btn:hover {
-    filter: brightness(105%);
+.game-header {
+  justify-content: space-between;
+  margin-bottom: 22px;
 }
 
-.scoreText {
-    font-weight: bold;
-    color: purple
+.eyebrow {
+  margin: 0 0 4px;
+  color: #ed7045;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
 }
 
-#settings-modal {
-    z-index: 1;
-    width: 100%;
-    height: 100vh;
-    position: absolute;
-    background-color: white;
-    top: 0 
+h1, h2 { margin: 0; color: #173c38; }
+h1 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(2rem, 8vw, 3rem); line-height: 0.95; }
+h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 1.7rem; }
+
+.icon-button {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d9ded8;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.72);
+  color: #173c38;
+  cursor: pointer;
 }
 
-.nameInput {
-    width: 200px;
-    height: 30px;
-    font-size: 1.25rem;
+.scoreboard {
+  gap: 10px;
 }
 
-.modal {
-    z-index: 2;
-    position: absolute; 
-    top: 45%;
-    left: 0; 
-    right: 0; 
-    margin-left: auto; 
-    margin-right: auto; 
-    width: 400px; /* Need a specific value to work */
-    height: 200px;
-    background-color: pink;
-    border-radius: 5px;
-    
+.player-card {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid #e1e5df;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.78);
+  transition: border-color 180ms ease, transform 180ms ease;
 }
 
-.br {
-    border-right: 2px solid pink !important;
-    /* border-radius: 5%; */
+.player-card.active {
+  border-color: #ed7045;
+  transform: translateY(-2px);
 }
 
-.bt {
-    border-top: 2px solid pink;
-    /* border-radius: 5%; */
+.player-card strong { display: block; overflow: hidden; color: #173c38; text-overflow: ellipsis; }
+.player-card > b { color: #173c38; font-size: 1.35rem; }
+.player-label { display: block; color: #78857f; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.12em; }
+.versus { color: #9ba49e; font-size: 0.65rem; font-weight: 800; }
+
+.player-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-weight: 800;
+}
+.cat-mark { background: #ed7045; color: white; }
+.fish-mark { background: #2d9c8e; color: white; }
+
+.turn-status {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #65746f;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #ed7045; }
+
+.board {
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #173c38;
+  box-shadow: 0 24px 70px rgba(23, 60, 56, 0.18);
 }
 
-.bb {
-    border-bottom: 2px solid pink;
-    /* border-radius: 5%; */
+.cell {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: #f8f7f0;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+.cell:not(:disabled):hover { background: white; transform: scale(0.97); }
+.cell.occupied { cursor: default; }
+.cell.winning { background: #ffe4d7; }
+.board-mark {
+  width: 58%;
+  height: 58%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: clamp(1.2rem, 7vw, 2.2rem);
+  font-weight: 800;
+  animation: mark-in 220ms cubic-bezier(.2,.9,.2,1.25);
 }
 
-.bl {
-    border-left: right 2px solid pink;
-    /* border-radius: 5%; */
+.game-actions { justify-content: space-between; gap: 12px; margin-top: 18px; }
+.primary-button, .secondary-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 6px;
+  padding: 0 18px;
+  font-weight: 800;
+  cursor: pointer;
 }
+.primary-button { border: 0; background: #ed7045; color: white; }
+.secondary-button { border: 1px solid #d6dcd6; background: transparent; color: #173c38; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
 
+.overlay {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 43, 40, 0.68);
+  backdrop-filter: blur(10px);
+}
+.dialog {
+  width: min(410px, 100%);
+  position: relative;
+  display: grid;
+  gap: 16px;
+  padding: 34px;
+  border-radius: 8px;
+  background: #fdfcf7;
+  box-shadow: 0 30px 90px rgba(0,0,0,0.28);
+}
+.dialog-close { position: absolute; top: 16px; right: 16px; }
+.dialog label { display: grid; gap: 7px; color: #52625d; font-size: 0.78rem; font-weight: 800; }
+.dialog input { height: 46px; border: 1px solid #d8ddd7; border-radius: 6px; padding: 0 13px; background: white; color: #173c38; font-size: 1rem; }
+.dialog input:focus { outline: 2px solid rgba(237,112,69,0.3); border-color: #ed7045; }
+.full-button { width: 100%; }
+
+@keyframes mark-in { from { opacity: 0; transform: scale(0.4) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@media (max-width: 520px) {
+  .game-shell { align-items: start; padding: 18px 14px; }
+  .game-panel { padding-top: 8px; }
+  .player-card { grid-template-columns: 34px minmax(0, 1fr) auto; padding: 9px; }
+  .player-mark { width: 34px; height: 34px; }
+  .game-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .primary-button, .secondary-button { padding: 0 10px; }
+  .dialog { padding: 30px 22px 22px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>

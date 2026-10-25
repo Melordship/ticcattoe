@@ -15,12 +15,20 @@ export default {
 </script>
 
 <style>
+* { box-sizing: border-box; }
+html { background: #f3f1e8; }
+body { margin: 0; min-width: 320px; }
+button, input { font: inherit; }
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  color: #173c38;
+  background:
+    linear-gradient(rgba(23, 60, 56, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 60, 56, 0.025) 1px, transparent 1px),
+    #f3f1e8;
+  background-size: 32px 32px;
 }
 </style>
