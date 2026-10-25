@@ -13,13 +13,13 @@
 
       <div class="scoreboard">
         <div class="player-card" :class="{ active: !result && currentPlayer === 'playerOne' }">
-          <span class="player-mark cat-mark">C</span>
+          <span class="player-mark cat-mark" aria-hidden="true">{{ playerOneAvatar }}</span>
           <div><span class="player-label">CAT</span><strong>{{ playerOneName }}</strong></div>
           <b>{{ playerOneScore }}</b>
         </div>
         <div class="versus">VS</div>
         <div class="player-card player-two" :class="{ active: !result && currentPlayer === 'playerTwo' }">
-          <span class="player-mark fish-mark">F</span>
+          <span class="player-mark fish-mark" aria-hidden="true">{{ playerTwoAvatar }}</span>
           <div><span class="player-label">FISH</span><strong>{{ playerTwoName }}</strong></div>
           <b>{{ playerTwoScore }}</b>
         </div>
@@ -42,8 +42,8 @@
           :disabled="Boolean(cell) || Boolean(result)"
           @click="makeMove(index)"
         >
-          <span v-if="cell === 'playerOne'" class="board-mark cat-mark">C</span>
-          <span v-if="cell === 'playerTwo'" class="board-mark fish-mark">F</span>
+          <span v-if="cell === 'playerOne'" class="board-mark cat-mark">{{ playerOneAvatar }}</span>
+          <span v-if="cell === 'playerTwo'" class="board-mark fish-mark">{{ playerTwoAvatar }}</span>
         </button>
       </div>
 
@@ -72,6 +72,34 @@
           <span>Fish player</span>
           <input v-model="playerTwoNameInput" maxlength="18" />
         </label>
+        <fieldset class="avatar-picker">
+          <legend>Cat player avatar</legend>
+          <div class="avatar-options">
+            <button
+              v-for="avatar in catAvatars"
+              :key="`one-${avatar}`"
+              type="button"
+              class="avatar-option cat-avatar"
+              :class="{ selected: playerOneAvatarInput === avatar }"
+              :aria-label="`Choose ${avatar} for cat player`"
+              @click="playerOneAvatarInput = avatar"
+            >{{ avatar }}</button>
+          </div>
+        </fieldset>
+        <fieldset class="avatar-picker">
+          <legend>Fish player avatar</legend>
+          <div class="avatar-options">
+            <button
+              v-for="avatar in catAvatars"
+              :key="`two-${avatar}`"
+              type="button"
+              class="avatar-option fish-avatar"
+              :class="{ selected: playerTwoAvatarInput === avatar }"
+              :aria-label="`Choose ${avatar} for fish player`"
+              @click="playerTwoAvatarInput = avatar"
+            >{{ avatar }}</button>
+          </div>
+        </fieldset>
         <button class="primary-button full-button" type="button" @click="saveSettings">Save & play</button>
       </section>
     </div>
@@ -81,10 +109,15 @@
 import { computed, ref } from 'vue'
 import { ArrowRight, RotateCcw, Settings, X } from '@lucide/vue'
 
+const catAvatars = ['🐱', '😸', '😺', '😻', '🙀', '😽']
 const playerOneName = ref('Mochi')
 const playerTwoName = ref('Toast')
+const playerOneAvatar = ref(catAvatars[0])
+const playerTwoAvatar = ref(catAvatars[2])
 const playerOneNameInput = ref(playerOneName.value)
 const playerTwoNameInput = ref(playerTwoName.value)
+const playerOneAvatarInput = ref(playerOneAvatar.value)
+const playerTwoAvatarInput = ref(playerTwoAvatar.value)
 const playerOneScore = ref(0)
 const playerTwoScore = ref(0)
 const settingsOpen = ref(true)
@@ -108,12 +141,16 @@ const cellName = (index) => `${Math.floor(index / 3) + 1}, ${index % 3 + 1}`
 const saveSettings = () => {
   playerOneName.value = playerOneNameInput.value.trim() || 'Mochi'
   playerTwoName.value = playerTwoNameInput.value.trim() || 'Toast'
+  playerOneAvatar.value = playerOneAvatarInput.value
+  playerTwoAvatar.value = playerTwoAvatarInput.value
   settingsOpen.value = false
 }
 
 const closeSettings = () => {
   playerOneNameInput.value = playerOneName.value
   playerTwoNameInput.value = playerTwoName.value
+  playerOneAvatarInput.value = playerOneAvatar.value
+  playerTwoAvatarInput.value = playerTwoAvatar.value
   settingsOpen.value = false
 }
 
@@ -352,6 +389,14 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .dialog label { display: grid; gap: 7px; color: #52625d; font-size: 0.78rem; font-weight: 800; }
 .dialog input { height: 46px; border: 1px solid #d8ddd7; border-radius: 6px; padding: 0 13px; background: white; color: #173c38; font-size: 1rem; }
 .dialog input:focus { outline: 2px solid rgba(237,112,69,0.3); border-color: #ed7045; }
+.avatar-picker { margin: 0; padding: 0; border: 0; }
+.avatar-picker legend { margin-bottom: 8px; color: #52625d; font-size: 0.78rem; font-weight: 800; }
+.avatar-options { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; }
+.avatar-option { aspect-ratio: 1; border: 2px solid transparent; border-radius: 50%; font-size: clamp(1.15rem, 6vw, 1.55rem); cursor: pointer; transition: transform 150ms ease, border-color 150ms ease; }
+.avatar-option:hover { transform: translateY(-2px); }
+.avatar-option.selected { border-color: #173c38; box-shadow: 0 0 0 2px white inset; }
+.cat-avatar { background: #ffe5da; }
+.fish-avatar { background: #d7f0eb; }
 .full-button { width: 100%; }
 
 @keyframes mark-in { from { opacity: 0; transform: scale(0.4) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
